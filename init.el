@@ -36,6 +36,32 @@
 	  (setq ac-sources
 			'(ac-source-perl-copletion)))))
 
+;;--------------------------------------------------
+;; 括弧開始の直後は改行後に閉じ括弧を挿入する
+;; 通常は改行後にインデントを行う
+;;--------------------------------------------------
+(defun newline-and-insert-close-bracket()
+  (interactive)
+  (if (and (eq (following-char) ?\x000a) (eq (preceding-char) ?\x007b))
+	  (progn (dotimes (i 2) (newline-and-indent))
+			 (backward-delete-char-untabify tab-width)
+			 (insert ?\x007d)
+			 (previous-line)
+			 (indent-according-to-mode))
+	  (newline-and-indent)))
+
+;;--------------------------------------------------
+;; 対になる文字を入力したら閉じ文字を自動入力
+;;--------------------------------------------------
+(defun insert-pair-char()
+ (interactive)
+ (cond ((eq last-command-event ?\x0022) (insert ?\x0022) (backward-char))
+ 		((eq last-command-event ?\x0027) (insert ?\x0027) (backward-char))
+ 		((eq last-command-event ?\x0028) (insert ?\x0029) (backward-char))
+ 		((eq last-command-event ?\x003c) (insert ?\x003e) (backward-char))))
+
+(add-hook 'post-self-insert-hook 'insert-pair-char)
+
 
 ;;**************************************************
 ;
@@ -378,6 +404,8 @@ nil 'japanese-jisx0208
 ;; js2-modeのフック
 (add-hook 'js2-mode-hook
           '(lambda ()
+			(setq indent-tabs-mode nil)
+			(define-key js2-mode-map (kbd "C-j") 'newline-and-insert-close-bracket)
 			(set-face-foreground 'js2-function-param "white")
 			(set-face-foreground 'js2-external-variable "white")
 			(set-face-foreground 'js2-jsdoc-tag "green")
